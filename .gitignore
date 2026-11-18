@@ -1,0 +1,14 @@
+dataset/
+runs/
+*.pt
+*.log
+logs/
+autotune_state.json
+camera_settings.json
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.idea/
+.vscode/
+.DS_Store

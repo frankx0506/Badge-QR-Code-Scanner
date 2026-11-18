@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badge Scanner</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel2:#1c232c; --line:#2a323d; --text:#e6edf3; --muted:#8b96a3;
+  --yellow:#f5c518; --green:#2fbf71; --red:#ef5350; --blue:#4c9aff; --orange:#ff9f43;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:8px 12px;transition:background .15s,border-color .15s,transform .05s}
+button:hover{border-color:#3d4855;background:#222a35}
+button:active{transform:translateY(1px)}
+button.on{background:rgba(76,154,255,.18);border-color:var(--blue);color:#cfe3ff}
+button.danger:hover{border-color:var(--red);color:#ffb4b2}
+kbd{font:11px ui-monospace,monospace;background:#0b0e13;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;color:var(--muted);margin-left:6px}
+header{display:flex;align-items:center;gap:14px;padding:12px 18px;border-bottom:1px solid var(--line);background:#0b0e13}
+header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+.pill{font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.live{color:var(--green);border-color:rgba(47,191,113,.5)}
+.pill.err{color:var(--red);border-color:rgba(239,83,80,.6)}
+.spacer{flex:1}
+.nav a{color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px;border:1px solid transparent}
+.nav a.on{color:var(--text);border-color:var(--line);background:var(--panel2)}
+.nav a:hover{color:var(--text)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.seg button{border:0;border-radius:0;background:transparent;padding:7px 12px}
+.seg button.on{background:var(--blue);color:#fff}
+main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;padding:14px 18px;max-width:1800px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px}
+.card h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card h2 .r{margin-left:auto;text-transform:none;letter-spacing:0}
+.video{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;border:1px solid var(--line);aspect-ratio:16/9}
+.video img{width:100%;height:100%;object-fit:contain;display:block}
+.video .tag{position:absolute;left:12px;top:12px;display:flex;gap:6px}
+.video .tag span{background:rgba(0,0,0,.65);backdrop-filter:blur(4px);padding:4px 10px;border-radius:999px;font-size:12px}
+@keyframes blink{50%{opacity:.2}}
+.below{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.step{border-radius:10px;padding:12px;background:var(--panel2);border:1px solid var(--line);min-height:96px}
+.step .k{font-size:12px;color:var(--muted)}
+.step .v{font-size:20px;font-weight:700;margin-top:4px;word-break:break-all}
+.step .s{font-size:12px;color:var(--muted);margin-top:4px}
+.step.ok-y{border-color:rgba(245,197,24,.55);background:rgba(245,197,24,.08)} .step.ok-y .v{color:var(--yellow)}
+.step.ok-g{border-color:rgba(47,191,113,.55);background:rgba(47,191,113,.08)} .step.ok-g .v{color:var(--green)}
+.step.skip .v{color:var(--muted)}
+.who{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.who b{font-size:16px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{background:var(--panel2);border-radius:8px;padding:8px;text-align:center}
+.stat b{display:block;font-size:17px}
+.stat span{font-size:11px;color:var(--muted)}
+.thumbs img{width:100%;border-radius:8px;background:#000;display:block;aspect-ratio:16/9;object-fit:contain}
+.thumbs .lab{font-size:12px;color:var(--muted);margin:8px 0 4px}
+.side{display:flex;flex-direction:column;gap:14px;min-width:0}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.row > button{flex:1}
+select,input[type=text]{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 8px}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.sc{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;text-align:left}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px}
+.empty{color:var(--muted);font-size:12px;padding:6px 0}
+.log{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;max-height:180px;overflow:auto}
+.log div{padding:4px 0;border-bottom:1px solid #1f262f;display:flex;gap:10px}
+.log .q{color:var(--green)}
+.log .u{color:var(--red)}
+@media (max-width:1100px){main{grid-template-columns:1fr}.below{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Badge Scanner</h1>
+  <nav class="nav"><a href="/" class="on">Scanner</a></nav>
+  <span id="src" class="pill">connecting…</span>
+  <span id="det" class="pill" title="what finds the badge (step 1)"></span>
+  <div class="spacer"></div>
+  <div class="seg" title="M">
+    <button id="mBadge" class="on">Badge → QR</button>
+    <button id="mQr">QR only</button>
+    <button id="mObj" title="Read QR codes on any object: boxes, phones, books, signs">Other objects</button>
+  </div>
+  <button id="pause">Pause<kbd>P</kbd></button>
+</header>
+
+<main>
+  <section>
+    <div class="video">
+      <img id="vid" src="/stream/color" alt="camera">
+      <div class="tag"><span id="modeTag">Badge → QR</span></div>
+    </div>
+
+    <div class="below">
+      <div class="card">
+        <h2>Result</h2>
+        <div class="steps">
+          <div class="step" id="s1"><div class="k">Step 1 · Badge</div><div class="v" id="s1v">—</div><div class="s" id="s1s">&nbsp;</div></div>
+          <div class="step" id="s2"><div class="k">Step 2 · QR code</div><div class="v" id="s2v">—</div><div class="s" id="s2s">&nbsp;</div></div>
+        </div>
+        <div class="who"><span class="k" style="color:var(--muted)">Identified as</span><b id="who">—</b></div>
+        <div class="stats">
+          <div class="stat"><b id="fps">0</b><span>FPS</span></div>
+          <div class="stat"><b id="ms">0</b><span>ms / frame</span></div>
+          <div class="stat"><b id="bRate">0%</b><span>badge found</span></div>
+          <div class="stat"><b id="qRate">0%</b><span>QR shown · <b id="qRaw" style="display:inline;font-size:11px">0%</b> per frame</span></div>
+        </div>
+        <div class="row">
+          <span style="color:var(--muted);font-size:12px;white-space:nowrap">Max distance <b id="mdv">1.20</b> m</span>
+          <input id="md" type="range" min="0.2" max="3" step="0.05" value="1.2" style="flex:1">
+          <button id="reset" style="flex:0">Reset stats</button>
+        </div>
+      </div>
+      <div class="card thumbs">
+        <h2>What the scanner sees</h2>
+        <div class="lab">QR reader input (flattened badge)</div>
+        <img id="crop" src="/stream/crop" alt="">
+        <div class="lab">Depth (0–3 m)</div>
+        <img id="depth" src="/stream/depth" alt="" style="aspect-ratio:auto;max-height:150px">
+      </div>
+    </div>
+
+    <div class="card" id="peopleCard" style="margin-top:14px;display:none">
+      <h2>People <span class="r" style="color:var(--muted);text-transform:none;letter-spacing:0">scanned in this order</span></h2>
+      <div class="log" id="people"><div class="empty">Nobody in view.</div></div>
+      <div class="log" id="peopleLog" style="margin-top:8px;max-height:90px"></div>
+    </div>
+
+    <div class="card" id="otherCard" style="margin-top:14px;display:none">
+      <h2>Other QR codes <span class="r" style="color:var(--muted);text-transform:none;letter-spacing:0">not on a badge</span>
+        <button id="anyQrBtn" style="float:right;font-size:11px;padding:2px 8px">on</button></h2>
+      <div class="log" id="otherQr"><div class="empty">None in view.</div></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h2>Scan log</h2>
+      <div class="log" id="log"><div class="empty">No QR codes read yet.</div></div>
+    </div>
+  </section>
+
+  <aside class="side">
+    <div class="card" id="camCard" style="display:none">
+      <h2>Camera <span class="r" style="color:var(--muted);text-transform:none;letter-spacing:0">less blur = more QR reads</span></h2>
+      <div class="guide" style="font-size:12px;color:var(--muted);margin-bottom:8px">
+        Turn <b>auto exposure off</b>, lower <b>exposure</b> until moving badges look sharp, raise <b>gain</b> if it gets dark.
+        Watch the <b>per frame</b> QR rate (it resets on every change). <b>Save</b> keeps the settings for next start.
+      </div>
+      <div class="row" style="margin-bottom:6px"><label style="flex:1;font-weight:600"><input type="checkbox" id="atOn">
+        Auto-tune for badges</label></div>
+      <div id="atStat" style="font:12px ui-monospace,monospace;color:var(--muted);margin-bottom:8px"></div>
+      <div id="camCtl"></div>
+      <div class="row"><button id="camSave">Save as default</button><button id="camReset" class="danger">Reset</button></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let S = null;
+
+async function post(action, body={}) {
+  const r = await fetch("/api/" + action, {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)});
+  return r.json();
+}
+const _html = {};
+function setHTML(id, h) { if (_html[id] !== h) { $(id).innerHTML = h; _html[id] = h; } }
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+
+function setMode(m) { post("mode", {mode:m}).then(refresh); }
+$("mBadge").onclick = () => setMode("BADGE -> QR");
+$("mQr").onclick = () => setMode("QR ONLY");
+$("mObj").onclick = () => setMode("OBJECT -> QR");
+$("anyQrBtn").onclick = () => post("any_qr", {}).then(refresh);
+$("pause").onclick = () => post("pause").then(refresh);
+$("reset").onclick = () => post("reset_stats").then(refresh);
+let mdTimer; $("md").oninput = e => { $("mdv").textContent = (+e.target.value).toFixed(2); clearTimeout(mdTimer); mdTimer = setTimeout(() => post("max_dist", {value:+e.target.value}), 120); };
+
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  const k = e.key.toLowerCase();
+  if (k === "p") $("pause").click();
+  else if (k === "m") { const M = ["BADGE -> QR", "QR ONLY", "OBJECT -> QR"]; setMode(M[(M.indexOf(S ? S.mode : M[0]) + 1) % 3]); }
+});
+
+function render(s) {
+  S = s;
+  $("src").textContent = s.error ? "error: " + s.error : (s.paused ? "paused" : "● " + s.source);
+  $("src").className = "pill " + (s.error ? "err" : s.paused ? "" : "live");
+  $("det").textContent = "badge finder: " + s.detector + "  ⟳";
+  $("det").style.cursor = "pointer";
+  $("det").onclick = () => post("reload_model").then(r => { refresh(); });
+  $("det").style.color = s.detector.startsWith("trained") ? "var(--green)" : "var(--orange)";
+  const qrOnly = s.mode === "QR ONLY", objMode = s.mode === "OBJECT -> QR";
+  $("mBadge").classList.toggle("on", !qrOnly && !objMode); $("mQr").classList.toggle("on", qrOnly); $("mObj").classList.toggle("on", objMode);
+  $("modeTag").textContent = qrOnly ? "QR only" : objMode ? "Object → QR" : "Badge → QR";
+  $("s1").querySelector(".k").textContent = objMode ? "Step 1 · Object" : "Step 1 · Badge";
+  $("pause").classList.toggle("on", s.paused); $("pause").firstChild.textContent = s.paused ? "Resume" : "Pause";
+
+  // steps
+  const nb = s.badges.length;
+  if (objMode) {
+    const ob = s.objects || [], o = ob.find(x => x.qr) || ob[0];
+    $("s1").className = "step " + (ob.length ? "ok-y" : "");
+    $("s1v").textContent = ob.length ? (ob.length > 1 ? `${ob.length} objects` : "Found") : (s.codes && s.codes.length ? "code, no object" : "Not found");
+    $("s1s").textContent = o ? [`looks like: ${o.label}`, o.dist ? o.dist.toFixed(2) + " m" : ""].filter(Boolean).join(" · ") : "\u00a0";
+  } else {
+  $("s1").className = "step " + (qrOnly ? "skip" : nb ? "ok-y" : "");
+  $("s1v").textContent = qrOnly ? "skipped" : nb ? (nb > 1 ? `${nb} badges` : "Found") : "Not found";
+  $("s1s").textContent = qrOnly ? "QR-only mode" : nb ? [s.badges[0].dist && s.badges[0].dist.toFixed(2) + " m", s.badges[0].size].filter(Boolean).join(" · ") : (s.rejected ? `${s.rejected} shape(s) rejected` : " ");
+  }
+  $("s2").className = "step " + (s.qr ? "ok-g" : "");
+  $("s2v").textContent = s.qr ? s.qr.text : "Not read";
+  $("s2s").textContent = s.qr ? [s.qr.dist ? s.qr.dist.toFixed(2) + " m" : "", s.qr.held ? "held from a recent frame" : s.qr.multi ? "read by the multi-frame decoder" : s.qr.burst ? "read by burst super-resolution" : s.qr.soft ? "read by the deep decoder" : "read this frame"].filter(Boolean).join(" · ") : "\u00a0";
+  const badgeName = (s.badges.find(b => b.name) || {}).name;      // printed name read off the badge
+  const who = s.qr ? (s.qr.who || badgeName) : badgeName;
+  $("who").textContent = who || (s.qr ? (s.db_size ? "Unknown badge" : s.qr.text) : "—");
+  $("who").style.color = who ? "var(--green)" : s.qr && s.db_size ? "var(--red)" : s.qr ? "var(--text)" : "var(--muted)";
+
+  const st = s.stats, f = Math.max(st.frames, 1);
+  $("fps").textContent = st.fps.toFixed(1); $("ms").textContent = Math.round(st.ms);
+  $("bRate").textContent = qrOnly || objMode ? "—" : Math.round(100 * st.badge / f) + "%";
+  $("qRate").textContent = Math.round(100 * st.qr / f) + "%";
+  $("qRaw").textContent = Math.round(100 * (st.qr_raw || 0) / f) + "%" + (st.qr_soft ? ` · deep decoder ${st.qr_soft}` : "") + (st.qr_burst ? ` · burst ${st.qr_burst}` : "") + (st.qr_multi ? ` · multi-frame ${st.qr_multi}` : "");
+  if (document.activeElement !== $("md")) { $("md").value = s.max_dist; $("mdv").textContent = s.max_dist.toFixed(2); }
+
+  renderAuto(s.autotune);
+
+  if (s.people) {
+    $("peopleCard").style.display = "";
+    const COL = {ENGAGED:"#ffa000", APPROACHING:"#ffd878", PRESENT:"#c8c8c8", FAR:"#787878", IDENTIFIED:"var(--green)", LEAVING:"#008c00"};
+    setHTML("people", s.people.length ? s.people.map(p => `<div><span style="color:${COL[p.state] || "#ccc"};min-width:96px">P${p.id} ${esc(p.state)}</span>
+        <span>${p.dist ? p.dist.toFixed(2) + " m" : "–"}</span><span style="color:var(--muted)">${p.speed > 0.15 ? "coming closer" : p.speed < -0.15 ? "moving away" : ""}</span>
+        <span>${p.has_badge ? "badge" : '<span style="color:var(--muted)">no badge seen</span>'}</span>
+        <span><b>${esc(p.name || "")}</b></span><span class="q">${esc(p.identity || "")}</span><span style="color:var(--muted)">${p.returning ? "seen recently - don't re-greet" : ""}</span></div>`).join("")
+      : '<div class="empty">Nobody in view.</div>');
+    setHTML("peopleLog", (s.people_log || []).map(e => `<div><span>${esc(e.t)}</span><span>${esc(e.text)}</span></div>`).join(""));
+  }
+  if (s.any_qr) {
+    $("otherCard").style.display = objMode ? "none" : "";
+    $("anyQrBtn").textContent = s.any_qr.on ? `on · ${s.any_qr.ms} ms` : "off";
+    setHTML("otherQr", !s.any_qr.on ? '<div class="empty">Off - only badge QR codes are read.</div>' :
+      s.other_qr.length ? s.other_qr.map(q => `<div><span class="q" style="word-break:break-all">${esc(q.text)}</span>
+        <span>${q.dist ? q.dist.toFixed(2) + " m" : ""}</span></div>`).join("") : '<div class="empty">None in view.</div>');
+  }
+  setHTML("log", s.log.length ? s.log.map(l => `<div><span>${esc(l.t)}</span><span class="q">${esc(l.qr)}</span>
+      <span>${l.dist ? l.dist.toFixed(2) + " m" : ""}</span><span class="${l.who === "UNKNOWN" ? "u" : ""}">${esc(l.who || "")}</span><span style="color:var(--muted)">${esc(l.mode)}</span></div>`).join("")
+    : '<div class="empty">No QR codes read yet.</div>');
+}
+
+async function refresh() {
+  try { render(await (await fetch("/api/state")).json()); }
+  catch (e) { $("src").textContent = "disconnected"; $("src").className = "pill err"; }
+}
+
+// ---- camera controls
+const CAM_LABEL = {enable_auto_exposure:"Auto exposure", exposure:"Exposure", gain:"Gain", auto_exposure_priority:"Auto-exposure priority (may lower FPS)",
+  sharpness:"Sharpness", contrast:"Contrast", brightness:"Brightness", backlight_compensation:"Backlight compensation"};
+function renderCam(ctl) {
+  if (!ctl.length) { $("camCard").style.display = "none"; return; }
+  $("camCard").style.display = "block";
+  $("camCtl").innerHTML = ctl.filter(c => !c.readonly).map(c => {
+    const bool = c.min === 0 && c.max === 1 && c.step === 1;
+    return bool
+      ? `<div class="row"><label style="flex:1;font-size:13px"><input type="checkbox" data-n="${c.name}" ${c.value ? "checked" : ""}> ${CAM_LABEL[c.name] || c.name}</label></div>`
+      : `<div style="margin-top:8px;font-size:12px;color:var(--muted)">${CAM_LABEL[c.name] || c.name} <b style="color:var(--text)" id="cv_${c.name}">${c.value}</b>
+         <input type="range" data-n="${c.name}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}"></div>`;
+  }).join("");
+}
+async function camSet(name, value) {
+  const r = await post("camera", {name, value});
+  if (r.ok) renderCam(r.controls); else alert("Camera: " + r.error);
+}
+$("camCtl").addEventListener("change", e => {
+  const el = e.target, n = el.dataset.n; if (!n) return;
+  camSet(n, el.type === "checkbox" ? (el.checked ? 1 : 0) : +el.value);
+});
+$("camCtl").addEventListener("input", e => { const el = e.target; if (el.type === "range") $("cv_" + el.dataset.n).textContent = el.value; });
+$("atOn").onchange = async e => { const r = await post("autotune", {on: e.target.checked}); if (r.ok) renderCam(r.controls); };
+function renderAuto(a) {
+  if (!a) return;
+  if (document.activeElement !== $("atOn")) $("atOn").checked = a.enabled;
+  $("atStat").innerHTML = !a.enabled ? "off — manual settings below" : a.exposure_ms === undefined ? "starting…" :
+    `metering: <b style="color:var(--text)">${a.metering}</b> · exposure ${a.exposure_ms} ms (blur cap ${a.cap_ms}) · gain ${a.gain}<br>` +
+    `badge brightness ${a.bright} · glare ${a.glare}% · motion ${a.speed} px/s${a.speed_src === "90fps" ? " (measured at 90 fps)" : ""}<br>` +
+    (S && S.motion ? `90 fps motion (${S.motion.rate} Hz): badge ${S.motion.badge ? S.motion.badge.speed + " px/s" + (S.motion.badge.still ? " · still" : "") : "–"} · ` +
+      `person ${S.motion.person ? (S.motion.person.vz < -0.15 ? "coming closer " : S.motion.person.vz > 0.15 ? "moving away " : "") + S.motion.person.vz + " m/s" : "–"}<br>` : "") +
+    `sharpness ${a.sharpness ?? "-"} · QR rate by sharpness: ${Object.entries(a.sharpness_read_rates || {}).map(([k, v]) => k + ":" + v + "%").join(" ") || "learning…"}`;
+  document.querySelectorAll('#camCtl input').forEach(el => {
+    if (["exposure", "gain", "enable_auto_exposure", "sharpness"].includes(el.dataset.n)) el.disabled = a.enabled;
+  });
+}
+$("camSave").onclick = async () => { const r = await post("camera", {op:"save"}); alert(r.ok ? "Saved: used automatically next start" : r.error); };
+$("camReset").onclick = async () => { const r = await post("camera", {op:"reset"}); if (r.ok) renderCam(r.controls); };
+fetch("/api/camera").then(r => r.json()).then(d => renderCam(d.controls)).catch(() => {});
+
+setInterval(refresh, 300); refresh();
+</script>
+</body>
+</html>

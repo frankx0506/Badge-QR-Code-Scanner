@@ -1,0 +1,7 @@
+{
+ "imgsz": [
+  384,
+  640
+ ],
+ "architecture": "yolo26n"
+}

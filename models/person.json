@@ -1,0 +1,10 @@
+{
+ "imgsz": [
+  256,
+  416
+ ],
+ "classes": [
+  0
+ ],
+ "source": "yolo26n.pt (COCO), person class only"
+}
